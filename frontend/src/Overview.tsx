@@ -80,7 +80,10 @@ export function Overview({ index, params, refresh, syncError }: { index?: Index;
     if (daysBetween(next.from, next.to).length) setRange(next)
   }
   return <div className="home-overview">
+    {/* 页面标题，写法与识别工作台（Work.tsx）一致 */}
+    <div className="page-intro"><h1>项目总览</h1></div>
     {/* 首图板块（标题 + “园区动态”播报）暂时停用，代码先保留；恢复时去掉这层注释即可。Broadcast 组件和相关样式都还在。
+        恢复时注意：上面已有页面标题 h1，首图里的“头盔识别与复核”要改成 h2。
     <section className="hero home-hero" aria-labelledby="home-heading">
       <div className="hero-copy">
         <h1 id="home-heading">头盔识别与复核</h1>
