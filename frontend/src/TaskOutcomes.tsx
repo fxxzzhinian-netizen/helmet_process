@@ -43,14 +43,7 @@ export function TaskOutcomes({ images, loading }: { images: TaskImage[]; loading
         <title>{slice.label} · {slice.count} 条 · {slice.percent}%</title>
       </path>)}
       <text x="90" y="73" textAnchor="middle" className="task-outcomes-value num" aria-hidden="true">{loading ? '—' : active ? active.count : total}<tspan> 条</tspan></text>
-      <text x="90" y="94" textAnchor="middle" className="task-outcomes-label" aria-hidden="true">{active ? percent : '判定结果'}</text>
+      <text x="90" y="94" textAnchor="middle" className="task-outcomes-label" aria-hidden="true">{active ? active.label + ' · ' + percent : '判定结果'}</text>
     </svg>
-    <div className="task-outcomes-legend">{counts.map(category => <button key={category.id} type="button"
-      aria-pressed={picked === category.id} aria-label={`${category.label} ${category.count} 条`}
-      onPointerEnter={() => setHovered(category.id)} onPointerLeave={() => setHovered(undefined)}
-      onFocus={() => setHovered(category.id)} onBlur={() => setHovered(undefined)}
-      onClick={() => setPicked(value => value === category.id ? undefined : category.id)}>
-      <i style={{ background: category.color }} aria-hidden="true" /><span>{category.label}</span><b className="num">{loading ? '—' : category.count}</b>
-    </button>)}</div>
   </div>
 }
