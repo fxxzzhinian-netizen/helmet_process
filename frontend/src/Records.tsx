@@ -59,14 +59,18 @@ const time = (s?: string) =>
         timeZone: 'Asia/Shanghai',
       }).format(new Date(s))
     : '—'
-function EventDetail({
+export function EventDetail({
   id,
   close,
   changed,
+  taskContext = false,
+  onAssociate,
 }: {
   id: string
   close: () => void
   changed: () => void
+  taskContext?: boolean
+  onAssociate?: (row: EventRow, reload: () => void) => void
 }) {
   const event = useRemote(id, () => api<Audit>('/events/' + pathId(id)).then(withDisplayCapture))
   const row = event.data
@@ -82,7 +86,8 @@ function EventDetail({
   const group = image.data?.vehicles?.find((v) => v.id === row?.vehicle_id)
   const eligible = row ? canReview(row) : false
   const reviewing = eligible && (row?.status === 'review' || edit)
-  const identity = row?.identity
+  const identity = taskContext && row?.identity?.reason === '尚未上传本批人员资料'
+    ? { ...row.identity, reason: '尚未关联人员资料' } : row?.identity
   const personFields: { label: string; value?: string; wide?: boolean }[] = [
     { label: '车牌号', value: identity?.plate_number },
     { label: '手机号', value: identity?.phone },
@@ -130,7 +135,7 @@ function EventDetail({
             <div className="event-heading">
               <div className="event-file-info">
                 <div className="event-file-title"><FileImage size={18} aria-hidden="true" /><h3>{row.filename}</h3></div>
-                <p className="event-file-meta"><span title={row.batch_name}>{row.batch_name || '来源批次'}</span><i aria-hidden="true" /><span>{eventScope(row)}</span></p>
+                <p className="event-file-meta">{!taskContext && <><span title={row.batch_name}>{row.batch_name || '来源批次'}</span><i aria-hidden="true" /></>}<span>{eventScope(row)}</span></p>
               </div>
               <Badge value={eventStatus(row)} />
             </div>
@@ -154,6 +159,7 @@ function EventDetail({
                 </section>}
                 <section className="audit-section audit-person">
                   <div className="audit-section-heading"><h3>关联人员</h3>
+                    {onAssociate && <button className="link" onClick={() => onAssociate(row, event.refresh)}>关联资料</button>}
                   </div>
                   <IdentityName identity={identity} />
                   {personFields.some((field) => field.value) && <dl className="audit-facts">
@@ -173,7 +179,7 @@ function EventDetail({
                     <div className="wide"><dt>事件编号</dt><dd className="audit-event-id num">{row.id}</dd></div>
                   </dl>
                   <button className="link audit-batch-link" onClick={() => go('work', { batch: row.batch_id, image: row.image_id })}>
-                    在批次中查看<CornerUpRight size={14} />
+                    {taskContext ? '查看图片任务' : '在批次中查看'}<CornerUpRight size={14} />
                   </button>
                 </section>
                 {row.history?.length > 0 && <details className="audit-log audit-section">

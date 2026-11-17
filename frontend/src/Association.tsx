@@ -52,7 +52,7 @@ export function ImageIdentities({ events, showHeading = true }: { events: EventR
   )
 }
 
-export function AssociationDialog({ batch, close, saved }: { batch: Batch; close: () => void; saved: (state: AssociationState) => void }) {
+export function AssociationDialog({ batch, close, saved, taskFilename }: { batch: Batch; close: () => void; saved: (state: AssociationState) => void; taskFilename?: string }) {
   const picker = useRef<HTMLInputElement>(null)
   const current = useRemote(batch.id, () => api<AssociationState>('/batches/' + pathId(batch.id) + '/associations'))
   const [file, setFile] = useState<File>()
@@ -89,8 +89,8 @@ export function AssociationDialog({ batch, close, saved }: { batch: Batch; close
     }
   }
   return (
-    <Dialog title="关联违章" onClose={close} locked={busy}>
-      <p className="association-intro"><b title={batch.name}>{batch.name}</b><span>上传本批人员与车辆资料，关联到具体识别目标。<a className="link" href="/api/association-template.csv" download>下载关联模板</a></span></p>
+    <Dialog title={taskFilename ? '关联人员资料' : '关联违章'} onClose={close} locked={busy}>
+      <p className="association-intro"><b title={taskFilename || batch.name}>{taskFilename || batch.name}</b><span>{taskFilename ? `资料按文件名匹配此次导入的 ${batch.total} 张图片。` : '上传本批人员与车辆资料，关联到具体识别目标。'}<a className="link" href="/api/association-template.csv" download>下载关联模板</a></span></p>
       <div className="association-upload">
         <input ref={picker} className="native-hidden" type="file" accept=".csv,.jsonl,.json" disabled={!!busy} aria-label="选择人员资料"
           onChange={(event) => { select(event.target.files?.[0]); event.target.value = '' }} />

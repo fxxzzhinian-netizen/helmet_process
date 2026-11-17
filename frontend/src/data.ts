@@ -215,7 +215,7 @@ export function go(page: string, params: Record<string, string> = {}) {
 export function readRoute() {
   const [page, q] = location.hash.slice(1).replace(/^\//, '').split('?')
   return {
-    // work 不带 batch 参数是识别数据看板，带 batch 是批次详情；batches 是历史批次
+    // The work route is the task queue; legacy image links remain supported.
     page:
       page === 'work' || page === 'records' || page === 'batches'
         ? page

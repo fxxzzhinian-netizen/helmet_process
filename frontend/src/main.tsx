@@ -162,9 +162,7 @@ function App() {
   const title =
     route.page === 'batches'
       ? '历史批次'
-      : route.page === 'work' && route.params.get('batch')
-        ? '批次详情'
-        : pages.find((p) => p.id === route.page)!.name
+      : pages.find((p) => p.id === route.page)!.name
   useEffect(() => {
     document.title = title + ' · 园区骑行治理'
     window.scrollTo(0, 0)
@@ -256,10 +254,10 @@ function App() {
       {upload && (
         <UploadDialog
           close={() => setUpload(false)}
-          created={(b) => {
+          created={() => {
             setUpload(false)
             index.refresh()
-            go('work', { batch: b.id })
+            go('work', { queue: 'pending' })
           }}
         />
       )}

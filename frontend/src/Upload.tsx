@@ -19,7 +19,6 @@ export function UploadDialog({
 }) {
   const picker = useRef<HTMLInputElement>(null)
   const csvInput = useRef<HTMLInputElement>(null)
-  const [name, setName] = useState('')
   const [files, setFiles] = useState<File[]>([])
   const [csv, setCsv] = useState<File>()
   const [drag, setDrag] = useState(false)
@@ -41,7 +40,7 @@ export function UploadDialog({
       return true
     })
     setFiles([...files, ...unique])
-    setError(duplicate ? '已跳过同名文件。每批次按文件名匹配标签。' : '')
+    setError(duplicate ? '已跳过同名文件。' : '')
   }
   function pickCsv(incoming: FileList | null) {
     const file = incoming?.[0]
@@ -52,15 +51,15 @@ export function UploadDialog({
   }
   async function submit(e: FormEvent) {
     e.preventDefault()
-    if (!name.trim() || !files.length) {
-      setError('请填写批次名称并选择至少一张图片。')
+    if (!files.length) {
+      setError('请选择至少一张图片。')
       return
     }
     setBusy(true)
     setError('')
     setProgress(0)
     const form = new FormData()
-    form.append('name', name.trim())
+    form.append('name', '抓拍导入 ' + new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Shanghai', dateStyle: 'short', timeStyle: 'medium' }).format(new Date()))
     files.forEach((file) => form.append('files', file, file.name))
     if (csv) form.append('labels', csv, csv.name)
     try {
@@ -72,20 +71,9 @@ export function UploadDialog({
     }
   }
   return (
-    <Dialog title="上传识别批次" onClose={close} locked={busy}>
+    <Dialog title="上传图片" onClose={close} locked={busy}>
       <form onSubmit={submit}>
         <fieldset disabled={busy} className="form-stack">
-          <label>
-            批次名称
-            <input
-              autoFocus
-              required
-              maxLength={200}
-              placeholder="例如：园区东门早高峰"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </label>
           <div>
             <label htmlFor="photos">现场照片</label>
             <input
@@ -143,7 +131,8 @@ export function UploadDialog({
               </details>
             )}
           </div>
-          <div>
+          <details className="upload-optional">
+            <summary>人工标签（选填）</summary>
             <div className="field-label">
               <label htmlFor="labels">
                 人工标签 <small>选填 · CSV</small>
@@ -192,7 +181,7 @@ export function UploadDialog({
             >
               <FileSpreadsheet size={30} />
               <b>{csv ? '更换标签文件' : '选择或拖入标签文件'}</b>
-              <small>每批一份 CSV，按文件名匹配照片</small>
+              <small>CSV，按文件名匹配照片</small>
             </button>
             {csv && (
               <div className="file-summary file-line">
@@ -208,7 +197,7 @@ export function UploadDialog({
                 </button>
               </div>
             )}
-          </div>
+          </details>
         </fieldset>
         {busy && (
           <div className="upload-progress" role="status">
@@ -242,7 +231,7 @@ export function UploadDialog({
             ) : (
               <Upload size={16} />
             )}{' '}
-            {busy ? '正在上传' : '创建批次'}
+            {busy ? '正在上传' : '上传图片'}
           </button>
         </div>
       </form>

@@ -104,6 +104,11 @@ class BackendTest(unittest.TestCase):
             data = self.settled(b["id"])
         self.assertEqual(data["status"], "error")
         self.assertEqual([r["status"] for r in data["images"]], ["done", "error", "pending"])
+        tasks = self.client.get('/api/tasks').json
+        self.assertEqual([item['status'] for item in tasks], ['done', 'error', 'pending'])
+        self.assertEqual([item['id'] for item in tasks], ids)
+        self.assertEqual([event['status'] for event in tasks[0]['events']], ['violation', 'clear'])
+        self.assertTrue(all('original_path' not in item and 'model_result' not in item for item in tasks))
         self.assertIn("temporary model failure", data["images"][1]["error"])
         self.assertEqual(data["score"], {"correct": 1, "total": 1})
         self.assertEqual(self.client.post(run, json={}).json["accepted"], 2)
@@ -147,6 +152,8 @@ class BackendTest(unittest.TestCase):
         self.assertEqual(self.settled(batch['id'])["done"], 3)
         review_rows = self.client.get('/api/reviews').json
         self.assertEqual([row['person_count'] for row in review_rows], [6, 7])
+        tasks = self.client.get('/api/tasks').json
+        self.assertEqual(sorted(event['person_count'] for item in tasks for event in item['events'] if event['status'] == 'review'), [6, 7])
         self.assertTrue(all(row['review_eligible'] and row['identity']['status'] == 'unrecognized' for row in review_rows))
         self.assertEqual(self.client.get('/api/analytics?days=7').json['summary']['reviews'], 2)
         e = review_rows[0]["id"]
@@ -157,6 +164,9 @@ class BackendTest(unittest.TestCase):
             self.assertEqual(list(pool.map(confirm, range(6))), [200] * 6)
         self.assertEqual(len(self.client.get("/api/violations").json), 1)
         self.assertEqual(len(self.client.get("/api/reviews").json), 1)
+        tasks = self.client.get('/api/tasks').json
+        self.assertEqual(sum(event['status'] == 'review' for item in tasks for event in item['events']), 1)
+        self.assertEqual([event['source'] for item in tasks for event in item['events'] if event['id'] == e], ['human'])
         self.assertEqual([r["id"] for r in self.client.get("/api/violations?source=human").json], [e])
         self.assertEqual(self.client.post("/api/reviews/" + e, json={"decision": "clear", "revision": 0}).status_code, 409)
         self.assertEqual(self.client.post("/api/reviews/" + e, json={"decision": "clear", "revision": 1}).status_code, 200)

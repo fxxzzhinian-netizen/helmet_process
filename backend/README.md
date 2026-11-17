@@ -11,6 +11,8 @@ HELMET_DATA_DIR=/绝对路径/演示库 python -m backend --host 127.0.0.1 --por
 
 ## 请求与数据含义
 
+- `GET /api/tasks` 为工作台提供跨上传记录的只读图片列表，包含 `id`、`batch_id`、`filename`、`status`、`queued`、`error`、`prediction`、尺寸、重试次数、`completed_at`、`uploaded_at` 及当前 `events`。事件包含关联资料、当前人工决定及既有复核资格；不返回存储路径或模型大对象。上传分组仅用于内部提交图片处理请求，界面不要求用户选择或命名分组。
+
 - 上传字段为 `name`、重复的 `files` 和可选的 `labels`。可接收单帧 JPEG、PNG、WebP。每批 1–500 张，单文件最大 32 MiB、6400 万像素，整个 HTTP 请求最大 1 GiB。图片按上传顺序显示，批次按新建顺序倒排，事件按批次倒序、上传顺序、模型车辆顺序排列。
 - 标签文件为 UTF-8 CSV（支持 BOM），表头只能是 `filename,prediction` 两列，人工真值只接受 `helmet` 或 `no_helmet`。可提供部分标签，没有标签的照片不写入该行。表头含其他列时拒绝整个批次。同批重名、损坏图片、标签重复或无法匹配会拒绝整个批次。
 - 对已上传但尚未成功识别的图片，可在工作台勾选后启动；失败项可用同一入口重试。`POST /api/batches/{id}/run` 支持 `{"image_ids":["图片ID"]}`，省略字段或传空数组时处理整批。返回 HTTP 202、`accepted` 本次新入队张数及 `message`。并发点击及成功项重试均跳过已入队或已完成项。**要再次真实推理已完成的照片，请将照片上传到新批次**，以便保留此前判断、审核和计分。

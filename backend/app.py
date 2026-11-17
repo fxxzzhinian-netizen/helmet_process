@@ -13,6 +13,7 @@ from .worker import Service, load_detector
 from .consensus import analyze
 from .associations import association_state, parse_file, preview_import, save_import, template
 from .analytics import work_analytics
+from .tasks import work_tasks
 
 PROJECT = Path(__file__).resolve().parents[1]
 MAX_REQUEST = 1024 ** 3
@@ -49,6 +50,11 @@ def create_app(data_dir=None, detector_factory=load_detector, frontend_dir=None)
     def list_batches():
         with store.transaction() as con:
             return jsonify(batches(con))
+
+    @app.get("/api/tasks")
+    def task_list():
+        with store.transaction() as con:
+            return jsonify(work_tasks(con))
 
     @app.post("/api/batches")
     def upload():

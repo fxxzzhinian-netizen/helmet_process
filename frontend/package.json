@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test:overview": "node --test scripts/test-overview.mjs",
+    "test:work": "node --test scripts/test-work.mjs",
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview"
