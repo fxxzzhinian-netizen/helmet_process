@@ -259,6 +259,7 @@ function App() {
             index.refresh()
             go('work', { queue: 'pending' })
           }}
+          changed={index.refresh}
         />
       )}
     </div>

@@ -11,7 +11,8 @@ from .store import VERSION, batches, events, review
 from .uploads import create_batch
 from .worker import Service, load_detector
 from .consensus import analyze
-from .associations import association_state, parse_file, preview_import, save_import, template
+from .associations import (association_state, parse_file, preview_import, save_import, save_shared,
+                           shared_state, template)
 from .analytics import work_analytics
 from .tasks import work_tasks
 
@@ -84,6 +85,25 @@ def create_app(data_dir=None, detector_factory=load_detector, frontend_dir=None)
         return send_file(io.BytesIO(template()), mimetype="text/csv; charset=utf-8", as_attachment=True,
                          download_name="园区人员关联模板.csv")
 
+    def association_upload():
+        if request.mimetype != "multipart/form-data":
+            raise UnsupportedMediaType("请用 multipart/form-data 上传人员资料")
+        files = request.files.getlist("file")
+        if len(files) != 1 or set(request.files) != {"file"}:
+            raise BadRequest("请上传一个名为 file 的人员资料文件")
+        return parse_file(files[0]), request.form.get("mode", "demo")
+
+    @app.get("/api/associations")
+    def shared_associations():
+        with store.transaction() as con:
+            return jsonify(shared_state(con))
+
+    @app.post("/api/associations")
+    def import_shared_associations():
+        parsed, mode = association_upload()
+        with store.transaction(write=True) as con:
+            return jsonify(save_shared(con, parsed, mode))
+
     @app.get("/api/batches/<batch_id>/associations")
     def batch_associations(batch_id):
         with store.transaction() as con:
@@ -92,13 +112,7 @@ def create_app(data_dir=None, detector_factory=load_detector, frontend_dir=None)
     @app.post("/api/batches/<batch_id>/associations/preview")
     @app.post("/api/batches/<batch_id>/associations")
     def import_associations(batch_id):
-        if request.mimetype != "multipart/form-data":
-            raise UnsupportedMediaType("请用 multipart/form-data 上传人员资料")
-        files = request.files.getlist("file")
-        if len(files) != 1 or set(request.files) != {"file"}:
-            raise BadRequest("请上传一个名为 file 的人员资料文件")
-        parsed = parse_file(files[0])
-        mode = request.form.get("mode", "demo")
+        parsed, mode = association_upload()
         preview = request.path.endswith("/preview")
         if preview:
             with store.transaction() as con:

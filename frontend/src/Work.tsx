@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Check, ChevronLeft, ChevronRight, CircleCheck, CircleX, Clock3, ClipboardCheck, ImageOff, Link2, ListTodo, LoaderCircle, Play, RefreshCw, Search, Upload, X } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, CircleCheck, CircleX, Clock3, ClipboardCheck, Eye, ImageOff, Link2, ListTodo, LoaderCircle, Play, RefreshCw, Search, Upload, X } from 'lucide-react'
 import { api, canReview, eventScope, go, imgUrl, message, pathId, post, useRemote, type Batch, type Detail, type EventRow, type Index } from './data'
 import { Badge, Dialog, Empty, Fault } from './ui'
 import { Evidence } from './Evidence'
@@ -10,7 +10,7 @@ import { Capsule } from './Capsule'
 import { TaskOutcomes } from './TaskOutcomes'
 import { normalizeTask, taskQueues, taskRows, initialQueue, filterTasks, imageQueue, taskRuns, taskTime, taskProgress, type TaskImage, type TaskQueue, type TaskRow } from './workTasks'
 
-const labels: Record<TaskQueue, string> = { pending: '待处理', processing: '处理中', reviews: '待人工复核', done: '已完成', error: '处理异常' }
+const labels: Record<TaskQueue, string> = { pending: '已上传', processing: '处理中', reviews: '待人工复核', done: '已完成', error: '处理异常' }
 
 function TaskStatus({ queue, queued }: { queue: TaskQueue; queued?: boolean | number }) {
   return <span className={'task-status task-status-' + queue}><i aria-hidden="true" />{queue === 'processing' && queued ? '排队中' : labels[queue]}</span>
@@ -181,8 +181,8 @@ export function Work({ index, params, upload, refresh }: { index?: Index; params
           <td className="num task-time"><span>{day}</span><small>{clock}</small></td>
           <td><span className="task-address" title={person?.address}>{person?.address || '—'}</span></td>
           <td><TaskStatus queue={queue} queued={row.image.queued} />{queue === 'error' && row.image.error && <span className="task-error-reason" title={row.image.error}>{row.image.error}</span>}</td>
-          <td><div className="task-row-actions">{actionable ? <button className="link" disabled={busy || !!tasks.error} onClick={() => run([row.image])}>{queue === 'error' ? '重试处理' : '开始处理'}</button> : row.event ? <button className="link" onClick={() => openEvent(row.event!)}>开始复核</button> : <button className="link" onClick={() => route({ image: row.image.id })}>{queue === 'processing' ? '查看图片' : '查看结果'}</button>}
-            {queue === 'done' && <button className="link" onClick={() => associate(row.image.batch_id, () => {}, row.image.filename)} disabled={associationBusy}>关联资料</button>}
+          <td><div className="task-row-actions">{actionable ? <button className="link" disabled={busy || !!tasks.error} onClick={() => run([row.image])}>{queue === 'error' ? '重试处理' : '开始处理'}</button> : row.event ? <button className="link" onClick={() => openEvent(row.event!)}>开始复核</button> : <button className="link" onClick={() => route({ image: row.image.id })}><Eye size={14} aria-hidden="true" />{queue === 'processing' ? '查看图片' : '查看结果'}</button>}
+            {queue === 'done' && <button className="link" onClick={() => associate(row.image.batch_id, () => {}, row.image.filename)} disabled={associationBusy}><Link2 size={14} aria-hidden="true" />关联资料</button>}
           </div></td>
         </tr>
       })}</tbody></table></div>

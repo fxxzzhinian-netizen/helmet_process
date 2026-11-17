@@ -6,26 +6,35 @@ import {
   Info,
   LoaderCircle,
   Upload,
+  Users,
   X,
 } from 'lucide-react'
-import { uploadBatch, message, type Batch } from './data'
+import { api, uploadBatch, message, useRemote, type Batch, type SharedAssociation } from './data'
 import { Dialog, Fault } from './ui'
 export function UploadDialog({
   close,
   created,
+  changed,
 }: {
   close: () => void
   created: (b: Batch) => void
+  changed: () => void // 只保存了人员信息、没有新图片时调用，弹窗不关闭
 }) {
   const picker = useRef<HTMLInputElement>(null)
   const csvInput = useRef<HTMLInputElement>(null)
+  const peopleInput = useRef<HTMLInputElement>(null)
   const [files, setFiles] = useState<File[]>([])
   const [csv, setCsv] = useState<File>()
+  const [people, setPeople] = useState<File>()
   const [drag, setDrag] = useState(false)
   const [csvDrag, setCsvDrag] = useState(false)
+  const [peopleDrag, setPeopleDrag] = useState(false)
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
   const [progress, setProgress] = useState<number | null>(0)
+  // 当前对全部图片生效的人员信息，用来提示“已有资料，再传会替换”
+  const shared = useRemote('shared-association', () => api<SharedAssociation>('/associations'))
   function add(incoming: FileList | null) {
     if (!incoming?.length) return
     const added = Array.from(incoming)
@@ -49,20 +58,44 @@ export function UploadDialog({
     if (valid) setCsv(file)
     setError(valid ? '' : '标签文件须为 CSV。')
   }
+  function pickPeople(incoming: FileList | null) {
+    const file = incoming?.[0]
+    if (!file) return
+    const valid = /\.(csv|jsonl|json)$/i.test(file.name) && file.size > 0 && file.size <= 20 * 1024 * 1024
+    if (valid) setPeople(file)
+    setNotice('')
+    setError(valid ? '' : '人员信息须为不超过 20 MB 的 CSV、JSONL 或 JSON 文件。')
+  }
   async function submit(e: FormEvent) {
     e.preventDefault()
-    if (!files.length) {
-      setError('请选择至少一张图片。')
+    if (!files.length && !people) {
+      setError('请选择现场照片，或选择要更新的关联人员信息。')
       return
     }
     setBusy(true)
     setError('')
+    setNotice('')
     setProgress(0)
-    const form = new FormData()
-    form.append('name', '抓拍导入 ' + new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Shanghai', dateStyle: 'short', timeStyle: 'medium' }).format(new Date()))
-    files.forEach((file) => form.append('files', file, file.name))
-    if (csv) form.append('labels', csv, csv.name)
     try {
+      // 先存人员信息：文件有问题时在传图片之前就报错；之后本次和以往的图片都按它关联
+      if (people) {
+        const form = new FormData()
+        form.append('file', people, people.name)
+        form.append('mode', 'demo')
+        await api<SharedAssociation>('/associations', { method: 'POST', body: form })
+        setPeople(undefined)
+        shared.refresh()
+        if (!files.length) {
+          setNotice('人员信息已保存，全部图片都按这份资料关联。')
+          setBusy(false)
+          changed()
+          return
+        }
+      }
+      const form = new FormData()
+      form.append('name', '抓拍导入 ' + new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Shanghai', dateStyle: 'short', timeStyle: 'medium' }).format(new Date()))
+      files.forEach((file) => form.append('files', file, file.name))
+      if (csv) form.append('labels', csv, csv.name)
       const batch = await uploadBatch(form, setProgress)
       created(batch)
     } catch (e) {
@@ -129,6 +162,67 @@ export function UploadDialog({
                   ))}
                 </ul>
               </details>
+            )}
+          </div>
+          <div>
+            <div className="field-label">
+              <label htmlFor="people">
+                关联人员信息 <small>选填</small>
+              </label>
+              <a className="link upload-template" href="/api/association-template.csv" download>
+                下载模板
+              </a>
+            </div>
+            <input
+              ref={peopleInput}
+              id="people"
+              className="native-hidden"
+              tabIndex={-1}
+              type="file"
+              accept=".csv,.jsonl,.json"
+              onChange={(e) => {
+                pickPeople(e.target.files)
+                e.target.value = ''
+              }}
+            />
+            <button
+              type="button"
+              className={'drop ' + (peopleDrag ? 'drag' : '')}
+              onClick={() => peopleInput.current?.click()}
+              onDragOver={(e) => {
+                e.preventDefault()
+                setPeopleDrag(true)
+              }}
+              onDragLeave={() => setPeopleDrag(false)}
+              onDrop={(e) => {
+                e.preventDefault()
+                setPeopleDrag(false)
+                pickPeople(e.dataTransfer.files)
+              }}
+            >
+              <Users size={30} />
+              <b>{people ? '更换人员信息文件' : shared.data?.imported ? '选择或拖入新的人员信息' : '选择或拖入关联人员信息'}</b>
+              <small>CSV、JSONL 或 JSON，上传一次，全部图片识别后都按这份资料关联</small>
+            </button>
+            {people ? (
+              <div className="file-summary file-line">
+                <FileSpreadsheet size={15} />
+                <span>{people.name}</span>
+                <button
+                  type="button"
+                  className="icon-btn"
+                  aria-label="移除人员信息文件"
+                  onClick={() => setPeople(undefined)}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              shared.data?.imported && (
+                <p className="upload-people-current">
+                  当前资料：{shared.data.imported.filename} · {shared.data.imported.record_count} 条，重新上传将替换
+                </p>
+              )
             )}
           </div>
           <details className="upload-optional">
@@ -199,7 +293,12 @@ export function UploadDialog({
             )}
           </details>
         </fieldset>
-        {busy && (
+        {busy && !files.length && (
+          <div className="upload-progress" role="status">
+            <span>正在保存人员信息…</span>
+          </div>
+        )}
+        {busy && files.length > 0 && (
           <div className="upload-progress" role="status">
             <span>
               {progress === 1
@@ -216,6 +315,11 @@ export function UploadDialog({
           </div>
         )}
         {error && <Fault text={error} />}
+        {notice && !error && (
+          <p className="feedback" role="status">
+            {notice}
+          </p>
+        )}
         <div className="dialog-foot">
           <button
             type="button"
@@ -231,7 +335,8 @@ export function UploadDialog({
             ) : (
               <Upload size={16} />
             )}{' '}
-            {busy ? '正在上传' : '上传图片'}
+            {/* 只选了人员信息时，这个按钮只保存资料 */}
+            {files.length || !people ? (busy ? '正在上传' : '上传图片') : busy ? '正在保存' : '保存人员信息'}
           </button>
         </div>
       </form>

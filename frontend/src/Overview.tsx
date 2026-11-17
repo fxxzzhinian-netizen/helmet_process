@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowUpRight, CalendarDays, ChevronLeft, ChevronRight, Pause, Play, Radio } from 'lucide-react'
+import { ArrowUpRight, CalendarDays } from 'lucide-react'
 import { go, type Index } from './data'
 import { TrendChart, type TrendLine } from './TrendChart'
 import { LocationPie } from './LocationPie'
@@ -7,7 +7,6 @@ import { daysEnding, daysBetween, parkTime, readRecordScope, scopeParams, summar
 
 function Broadcast({ index }: { index?: Index }) {
   const [at, setAt] = useState(0)
-  const [paused, setPaused] = useState(false)
   const [hovered, setHovered] = useState(false)
   const [focused, setFocused] = useState(false)
   const [reduced, setReduced] = useState(() => matchMedia('(prefers-reduced-motion: reduce)').matches)
@@ -21,29 +20,22 @@ function Broadcast({ index }: { index?: Index }) {
     return () => media.removeEventListener('change', changed)
   }, [])
   useEffect(() => {
-    if (paused || hovered || focused || reduced || entries.length < 2) return
+    if (hovered || focused || reduced || entries.length < 2) return
     const timer = setInterval(() => { if (!document.hidden) setAt(value => (value + 1) % entries.length) }, 6000)
     return () => clearInterval(timer)
-  }, [paused, hovered, focused, reduced, entries.length])
+  }, [hovered, focused, reduced, entries.length])
   const stamp = row && parkTime(row.updated_at)
   const label = row?.status === 'review' ? '待人工复核' : row?.source === 'human' ? '人工确认违章' : '模型判定违章'
-  const move = (step: number) => { setAt(value => (value % entries.length + step + entries.length) % entries.length); setPaused(true) }
+  // 纯文字播报：不设底色、边框和切换按钮；自动轮播，鼠标悬停或键盘聚焦时停住，点文字直达该事件
   return <div className="home-broadcast" aria-label="园区动态滚动播报"
     onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
     onFocusCapture={() => setFocused(true)} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false) }}>
-    <span className="home-broadcast-label"><Radio size={16} aria-hidden="true" />园区动态</span>
-    <div className="home-broadcast-window">
-      {row ? <button key={row.id} className="home-broadcast-entry" onClick={() => go('records', { tab: row.status === 'review' ? 'reviews' : 'violations', event: row.id })}
-        title={`${row.identity?.address || '地点待补充'} · ${label} · ${row.filename}`}>
-        <time className="num" dateTime={row.updated_at}>{stamp ? stamp.day.slice(5) : ''}</time>
-        <span>{row.identity?.address || '地点待补充'}<b>{label}</b></span><ArrowUpRight size={14} aria-hidden="true" />
-      </button> : <span className="home-broadcast-placeholder">{index ? '暂无事件动态' : '正在读取园区动态…'}</span>}
-    </div>
-    <div className="home-broadcast-controls">
-      <button aria-label="上一条播报" disabled={entries.length < 2} onClick={() => move(-1)}><ChevronLeft size={14} /></button>
-      <button aria-label={paused ? '播放滚动播报' : '暂停滚动播报'} aria-pressed={paused} disabled={entries.length < 2 || reduced} onClick={() => setPaused(!paused)}>{paused || reduced ? <Play size={13} /> : <Pause size={13} />}</button>
-      <button aria-label="下一条播报" disabled={entries.length < 2} onClick={() => move(1)}><ChevronRight size={14} /></button>
-    </div>
+    <span className="home-broadcast-label">园区动态</span>
+    {row ? <button key={row.id} className="home-broadcast-entry" onClick={() => go('records', { tab: row.status === 'review' ? 'reviews' : 'violations', event: row.id })}
+      title={`${row.identity?.address || '地点待补充'} · ${label} · ${row.filename}`}>
+      <time className="num" dateTime={row.updated_at}>{stamp ? stamp.day.slice(5) : ''}</time>
+      <span>{row.identity?.address || '地点待补充'}</span><b>{label}</b>
+    </button> : <span className="home-broadcast-placeholder">{index ? '暂无事件动态' : '正在读取园区动态…'}</span>}
   </div>
 }
 

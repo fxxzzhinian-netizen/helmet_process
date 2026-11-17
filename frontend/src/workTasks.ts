@@ -12,7 +12,7 @@ export type TaskImage = Photo & {
 }
 export type TaskRow = { id: string; image: TaskImage; event?: EventRow }
 export const taskQueues: { id: TaskQueue; label: string; unit: string }[] = [
-  { id: 'pending', label: '待处理', unit: '张' },
+  { id: 'pending', label: '已上传', unit: '张' },
   { id: 'processing', label: '处理中', unit: '张' },
   { id: 'reviews', label: '待人工复核', unit: '条' },
   { id: 'done', label: '已完成', unit: '张' },

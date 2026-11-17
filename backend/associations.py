@@ -1,4 +1,6 @@
-"""Batch-scoped park identities. Demo assignment is explicit and never changes model decisions."""
+"""Park identities: one shared personnel file for every image, optionally replaced per batch.
+
+Demo assignment is explicit and never changes model decisions."""
 import csv
 import hashlib
 import io
@@ -114,10 +116,19 @@ def latest_import(con, batch_id):
                        (batch_id,)).fetchone()
 
 
+def latest_shared(con):
+    """The personnel file uploaded for all images. A batch with its own file uses that one instead."""
+    return con.execute("SELECT * FROM shared_associations ORDER BY revision DESC LIMIT 1").fetchone()
+
+
 def import_metadata(row):
     if row is None:
         return None
     return {key: row[key] for key in ("revision", "filename", "mode", "record_count", "named_count", "created_at")}
+
+
+def matcher_from(row):
+    return Matcher(json.loads(row["records_json"]) if row else [], row["mode"] if row else "filename")
 
 
 class Matcher:
@@ -132,7 +143,7 @@ class Matcher:
         identity = {"status": "unrecognized", "name": "未识别", "person_id": "", "method": "none",
                     "is_demo": self.mode == "demo", "verified": False, "reason": "未找到对应人员资料"}
         if not self.records:
-            identity["reason"] = "尚未上传本批人员资料"
+            identity["reason"] = "尚未上传本批人员资料"  # 前端按这句原文识别“还没有资料”的状态，勿改
             return identity
         filename = basename(event["filename"])
         candidates = self.by_name.get(filename.casefold(), [])
@@ -175,13 +186,15 @@ class Matcher:
 def attach_identities(con, rows):
     """Enrich one event query with one read per batch; original inference and review fields stay intact."""
     matchers = {}
+    shared = None  # parsed once, however many batches fall back to it
     vehicle_counts = {}
     for row in rows:
         batch_id = row["batch_id"]
         if batch_id not in matchers:
             imported = latest_import(con, batch_id)
-            matchers[batch_id] = Matcher(json.loads(imported["records_json"]) if imported else [],
-                                         imported["mode"] if imported else "filename")
+            if imported is None and shared is None:
+                shared = matcher_from(latest_shared(con))
+            matchers[batch_id] = matcher_from(imported) if imported else shared
         image_id = row["image_id"]
         if image_id not in vehicle_counts:
             vehicle_counts[image_id] = con.execute("SELECT count(*) FROM events WHERE image_id=?",
@@ -225,8 +238,10 @@ def plan(con, batch_id, records, mode):
 def association_state(con, batch_id):
     require_batch(con, batch_id)
     imported = latest_import(con, batch_id)
-    records = json.loads(imported["records_json"]) if imported else []
-    state = plan(con, batch_id, records, imported["mode"] if imported else "filename")
+    # Count with the file that actually applies: the batch's own, otherwise the shared one.
+    applied = imported or latest_shared(con)
+    records = json.loads(applied["records_json"]) if applied else []
+    state = plan(con, batch_id, records, applied["mode"] if applied else "filename")
     # The live ledger contains completed targets only. The import preview may also
     # contain pending images and is deliberately limited to 50 items.
     state.update(rows=events(con, batch_id=batch_id),
@@ -271,6 +286,25 @@ def save_import(con, batch_id, parsed, mode, revision):
                  len(parsed["records"]), result["summary"]["named"],
                  json.dumps(parsed["records"], ensure_ascii=False), json.dumps(result["summary"]), now()))
     return association_state(con, batch_id)
+
+
+def shared_state(con):
+    row = latest_shared(con)
+    return {"imported": import_metadata(row), "revision": row["revision"] if row else 0}
+
+
+def save_shared(con, parsed, mode):
+    """Replace the personnel file used by every batch without its own. Earlier versions are kept."""
+    if mode not in MODES:
+        raise BadRequest("关联方式须为 demo 或 filename")
+    current = latest_shared(con)
+    if not (current and current["digest"] == parsed["digest"] and current["mode"] == mode):
+        con.execute("""INSERT INTO shared_associations(id,revision,filename,digest,mode,
+            record_count,named_count,records_json,created_at) VALUES(?,?,?,?,?,?,?,?,?)""",
+                    (uid(), (current["revision"] if current else 0) + 1, parsed["filename"], parsed["digest"], mode,
+                     len(parsed["records"]), sum(bool(r["name"]) for r in parsed["records"]),
+                     json.dumps(parsed["records"], ensure_ascii=False), now()))
+    return shared_state(con)
 
 
 def template():

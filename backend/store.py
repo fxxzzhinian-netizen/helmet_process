@@ -55,6 +55,12 @@ CREATE TABLE IF NOT EXISTS association_imports (
     records_json TEXT NOT NULL, summary_json TEXT NOT NULL, created_at TEXT NOT NULL,
     UNIQUE(batch_id,revision)
 );
+CREATE TABLE IF NOT EXISTS shared_associations (
+    id TEXT PRIMARY KEY, revision INTEGER NOT NULL UNIQUE,
+    filename TEXT NOT NULL, digest TEXT NOT NULL, mode TEXT NOT NULL,
+    record_count INTEGER NOT NULL, named_count INTEGER NOT NULL,
+    records_json TEXT NOT NULL, created_at TEXT NOT NULL
+);
 """
 
 

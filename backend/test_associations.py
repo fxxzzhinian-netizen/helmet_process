@@ -170,6 +170,49 @@ class AssociationTest(unittest.TestCase):
         self.assertEqual(self.client.post('/api/reviews/' + event["id"], json={"decision": "clear", "revision": 0}).status_code, 409)
         self.assertEqual(self.client.get('/api/events/' + event["id"]).json["identity"]["name"], "演示乙")
 
+    def shared(self, text, mode="filename", filename="people.csv"):
+        return self.client.post("/api/associations", data={
+            "file": (io.BytesIO(text.encode("utf-8-sig")), filename), "mode": mode})
+
+    def names(self, batch):
+        rows = self.client.get('/api/violations', query_string={"batch_id": batch["id"]}).json
+        return [row["identity"]["name"] for row in rows]
+
+    def test_shared_file_covers_every_batch_until_a_batch_has_its_own(self):
+        self.run_batch()
+        other = self.upload("first.jpg")
+        self.assertEqual(self.client.get('/api/associations').json, {"imported": None, "revision": 0})
+        csv = 'filename,person_id,name\nfirst.jpg,001,演示甲\nsecond.jpg,002,演示乙\n'
+        saved = self.shared(csv)
+        self.assertEqual((saved.status_code, saved.json["revision"], saved.json["imported"]["record_count"]), (200, 1, 2))
+        self.assertEqual(self.shared(csv).json["revision"], 1)
+        # Already processed, processed later and uploaded later: all use the one file.
+        self.assertEqual(self.names(self.batch), ["演示甲", "演示乙"])
+        self.run_batch(other)
+        self.assertEqual(self.names(other), ["演示甲"])
+        later = self.upload("second.jpg")
+        self.run_batch(later)
+        self.assertEqual(self.names(later), ["演示乙"])
+        self.assertEqual(self.client.get(self.endpoint()).json["summary"]["matched"], 2)
+        self.assertIsNone(self.client.get('/api/batches/' + self.batch["id"]).json["association"])
+        # A batch's own file replaces the shared one for that batch only.
+        own = 'filename,person_id,name\nfirst.jpg,009,演示丙\n'
+        self.assertEqual(self.import_file(own, "filename", batch=other).status_code, 200)
+        self.assertEqual(self.names(other), ["演示丙"])
+        self.assertEqual(self.names(self.batch), ["演示甲", "演示乙"])
+        # Rejected files and modes leave the current version in place.
+        self.assertEqual(self.shared('name,name\nA,B\n').status_code, 400)
+        self.assertEqual(self.shared(csv, mode="other").status_code, 400)
+        self.assertEqual(self.client.get('/api/associations').json["revision"], 1)
+        replaced = self.shared('filename,person_id,name\nfirst.jpg,003,演示丁\n')
+        self.assertEqual((replaced.json["revision"], replaced.json["imported"]["record_count"]), (2, 1))
+        self.assertEqual(self.names(self.batch), ["演示丁", "未识别"])
+        self.assertEqual(self.names(other), ["演示丙"])
+        self.service.close()
+        self.start()
+        self.assertEqual(self.names(self.batch), ["演示丁", "未识别"])
+        self.assertTrue(all(r["source"] == "model" and r["revision"] == 0 for r in self.client.get('/api/violations').json))
+
     def test_conflicts_and_multiple_targets_are_not_misattributed(self):
         records = parsed('filename,person_id,name\nfirst.jpg,001,演示甲\nfirst.jpg,002,演示乙\n')["records"]
         event = {"filename": "first.jpg", "vehicle_id": "bike-a", "position": 0}

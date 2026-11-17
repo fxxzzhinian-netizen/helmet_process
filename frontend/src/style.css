@@ -5156,21 +5156,18 @@ dialog.csv-export-dialog {
 .home-overview { --home-human: #a6743e; }
 .home-overview .home-hero { min-height: 272px; }
 .home-overview .hero-copy { max-width: 76%; }
-.home-broadcast { display: flex; align-items: center; gap: 12px; min-height: 44px; max-width: 650px; padding: 6px 9px 6px 12px; margin-top: 23px; background: #102b25e6; border: 1px solid #c3dfcd30; border-radius: 6px; color: #f3f8ef; }
-.home-broadcast-label { display: flex; align-items: center; gap: 7px; flex: none; font-size: 12px; color: var(--lime); }
-.home-broadcast-window { flex: 1; min-width: 0; overflow: hidden; }
-.home-broadcast-entry { display: flex; align-items: center; gap: 9px; width: 100%; min-height: 31px; padding: 3px 0; background: none; border: 0; color: inherit; text-align: left; animation: home-broadcast-enter .3s ease-out; }
-.home-broadcast-entry > time { font-size: 11px; color: #bfd3c7; flex: none; }
-.home-broadcast-entry > span { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 12px; }
-.home-broadcast-entry b { margin-left: 10px; font-size: 11px; font-weight: 400; color: #d0e4cd; }
+/* 园区动态：直接排在首图上的一行纯文字，不设底色、边框和切换按钮。 */
+.home-broadcast { display: flex; align-items: center; gap: 14px; min-height: 32px; max-width: 650px; margin-top: 18px; color: #f3f8ef; font-size: 13px; line-height: 20px; }
+.home-broadcast-label { flex: none; color: var(--lime); }
+.home-broadcast-entry { display: flex; align-items: center; gap: 12px; min-width: 0; min-height: 32px; padding: 0; background: none; border: 0; border-radius: 3px; color: inherit; text-align: left; animation: home-broadcast-enter .3s ease-out; }
+.home-broadcast-entry:active:not(:disabled) { transform: none; }
+.home-broadcast-entry > time { flex: none; color: #cfdfd5; }
+.home-broadcast-entry > span { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.home-broadcast-entry > b { flex: none; font-weight: 400; color: #d6e8d3; }
 .home-broadcast-entry:hover > span { text-decoration: underline; text-underline-offset: 4px; }
-.home-broadcast-controls { display: flex; flex: none; gap: 1px; }
-.home-broadcast-controls button { width: 24px; min-height: 30px; display: grid; place-items: center; border: 0; border-radius: 4px; padding: 0; background: transparent; color: #d3e4d9; }
-.home-broadcast-controls button:hover:not(:disabled) { background: #c9e3d21c; }
-.home-broadcast-controls button:disabled { opacity: .3; }
-.home-broadcast-placeholder { font-size: 12px; color: #d0e4cd; }
-.home-broadcast button:focus-visible { outline-color: var(--lime); outline-offset: -2px; }
-@keyframes home-broadcast-enter { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.home-broadcast-entry:focus-visible { outline-color: var(--lime); }
+.home-broadcast-placeholder { color: #d6e8d3; }
+@keyframes home-broadcast-enter { from { opacity: 0; transform: translateY(5px); } }
 .home-overview .home-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .home-chart-toolbar { display: flex; justify-content: flex-end; margin: 20px 0 8px; }
 .home-date-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -5224,14 +5221,9 @@ dialog.csv-export-dialog {
 @media (max-width: 650px) {
   .home-overview .home-hero { min-height: 225px; }
   .home-overview .hero-copy { max-width: 100%; width: 100%; }
-  .home-broadcast { gap: 7px; padding: 6px 7px; margin-top: 20px; }
-  .home-broadcast-label { font-size: 11px; gap: 5px; }
-  .home-broadcast-label svg { width: 13px; }
-  .home-broadcast-controls button { width: 22px; }
-  .home-broadcast-entry { min-height: 34px; }
-  .home-broadcast-entry > time { display: none; }
-  .home-broadcast-entry > span { font-size: 11px; }
-  .home-broadcast-entry b, .home-broadcast-entry > svg { display: none; }
+  /* 手机上“园区动态”单独一行，下一行留给日期、地点和判定结果 */
+  .home-broadcast { flex-direction: column; align-items: flex-start; gap: 0; margin-top: 14px; font-size: 12px; }
+  .home-broadcast-entry { max-width: 100%; gap: 9px; }
   .home-date-controls { width: 100%; gap: 9px; }
   .home-date-inputs { width: 100%; }
   .home-date-inputs input { flex: 1; width: 138px; }
@@ -5246,7 +5238,7 @@ dialog.csv-export-dialog {
 }
 @media (prefers-reduced-motion: reduce) { .home-broadcast-entry { animation: none; } }
 @media (pointer: coarse) {
-  .home-broadcast-controls button { min-height: 40px; width: 30px; }
+  .home-broadcast-entry { min-height: 40px; }
   .home-presets button { min-height: 40px; }
   .home-date-inputs input, .record-capture-scope input { min-height: 40px; font-size: 14px; }
 }
@@ -5303,7 +5295,7 @@ dialog.csv-export-dialog {
 .task-table-selectable th:nth-child(2) { width: 29%; }
 .task-table th:nth-last-child(4) { width: 148px; }
 .task-table th:nth-last-child(2) { width: 130px; }
-.task-table th:last-child { width: 160px; }
+.task-table th:last-child { width: 188px; } /* 两个带图标的操作并排一行：2 ×（图标 14 + 间距 6 + 四个字 48）+ 间距 12 + 单元格内边距 28 */
 .task-photo { display: flex; align-items: center; gap: 12px; width: 100%; padding: 0; border: 0; background: transparent; text-align: left; }
 .task-thumbnail { width: 68px; height: 50px; flex: none; display: grid; place-items: center; overflow: hidden; background: #eff3f0; color: #879a8e; border-radius: 5px; }
 .task-thumbnail img { width: 100%; height: 100%; object-fit: cover; }
@@ -5344,6 +5336,8 @@ dialog.csv-export-dialog {
 .task-image-events .badge { font-size: 11px; }
 .task-image-events .link { align-self: flex-start; font-size: 12px; }
 .task-workbench .audit-section-heading .link { font-size: 12px; }
+.upload-template { margin-left: auto; padding: 0; font-size: 12px; font-weight: 500; }
+.upload-people-current { margin-top: 8px; font-size: 12px; line-height: 1.6; color: var(--muted); overflow-wrap: anywhere; }
 .upload-optional { margin-top: 4px; }
 .upload-optional > summary { cursor: pointer; font-size: 13px; color: var(--muted); padding: 9px 0; }
 .upload-optional .field-label { margin-top: 12px; }
@@ -5369,7 +5363,26 @@ dialog.csv-export-dialog {
   .task-list-head h2 { font-size: 16px; }
   .task-list-actions { gap: 7px; }
   .task-list-actions button { padding: 7px 9px; }
-  .task-table { min-width: 780px; }
+  /* 手机上任务列表不再横向滚动：每张图片排成一张卡片，图片与状态一行、时间与操作一行、地点一行 */
+  .task-table { display: block; min-width: 0; }
+  .task-table thead, .task-table tbody, .task-table thead tr { display: block; }
+  .task-table th { display: none; }
+  .task-table th.task-check { display: flex; align-items: center; gap: 9px; width: auto; padding: 2px 0 10px; background: none; }
+  .task-table th.task-check::after { content: '全选本页'; }
+  .task-table tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'photo status' 'time actions' 'place place'; align-items: center; gap: 8px 12px; padding: 13px 0; border-bottom: 1px solid var(--association-rule); }
+  .task-table-selectable tbody tr { grid-template-columns: 24px minmax(0, 1fr) auto; grid-template-areas: 'check photo status' 'check time actions' 'check place place'; }
+  .task-table tbody tr:hover { background: none; }
+  .task-table td { display: block; min-width: 0; padding: 0; border-bottom: 0; }
+  .task-table td.task-check { grid-area: check; align-self: start; width: auto; padding: 17px 0 0; }
+  .task-table td:nth-last-child(5) { grid-area: photo; }
+  .task-table td:nth-last-child(4) { grid-area: time; }
+  .task-table td:nth-last-child(3) { grid-area: place; }
+  .task-table td:nth-last-child(2) { grid-area: status; justify-self: end; align-self: start; max-width: 42vw; text-align: right; }
+  .task-table td:last-child { grid-area: actions; justify-self: end; }
+  .task-time > span, .task-time > small { display: inline; }
+  .task-time > small { margin: 0 0 0 7px; }
+  .task-address { white-space: normal; overflow-wrap: anywhere; }
+  .task-row-actions { justify-content: flex-end; }
   .task-image-heading { margin-top: 8px; }
   .task-image-aside .identity-facts dl { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }
@@ -5390,3 +5403,46 @@ dialog.csv-export-dialog {
 @media (min-width: 1001px) and (max-width: 1280px) { .task-progress-band { grid-template-columns: minmax(0, 1fr) 250px auto; gap: 16px 22px; } .task-progress-info { grid-row: 2; grid-column: 1 / -1; } .task-progress-info h2 { display: none; } }
 @media (min-width: 651px) and (max-width: 1000px) { .task-progress-band { grid-template-columns: minmax(0, 1fr) auto; gap: 16px 22px; } .task-progress-info { grid-row: 2; } .task-outcomes { grid-row: 2; grid-column: 2; width: 250px; } .task-progress-band .task-upload { grid-row: 1; grid-column: 2; } .task-progress-info h2 { display: none; } }
 @media (max-width: 650px) { .task-progress-band { grid-template-columns: minmax(0, 1fr) auto; gap: 13px; margin-top: 17px; } .task-progress-band .capsule { grid-column: 1 / -1; } .task-progress-info { grid-column: 1 / -1; } .task-progress-info h2 { display: none; } .task-progress-info .batch-facts { gap: 7px 14px; } .task-outcomes { width: 100%; } .task-outcomes-chart { width: 180px; } .task-progress-band .task-upload { align-self: center; padding-inline: 10px; white-space: nowrap; } }
+/* 手机端：违章台账不再横向滚动，每条记录排成一张卡片——左侧缩略图，右侧依次是人员、车牌、时间、地点、来源与操作。 */
+@media (max-width: 650px) {
+  .association-table { display: block; min-width: 0; }
+  .association-table colgroup, .association-table thead { display: none; }
+  .association-table tbody { display: block; }
+  .association-table tbody tr { display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; grid-template-areas: 'photo person kind' 'photo vehicle vehicle' 'photo time time' '. place place' '. source action'; align-items: start; gap: 6px 12px; padding: 14px 0; border-bottom: 1px solid var(--association-rule); }
+  .association-table tbody tr:last-child { border-bottom: 0; }
+  .association-table tbody tr,
+  .association-table tbody tr:nth-child(even),
+  .association-table tbody tr:hover,
+  .association-table tbody tr:focus-within { --association-row-bg: transparent; }
+  .association-table td { display: block; height: auto; min-width: 0; padding: 0; }
+  .association-table td:nth-child(1) { grid-area: person; }
+  .association-table td:nth-child(2) { grid-area: vehicle; }
+  .association-table td:nth-child(3) { grid-area: kind; justify-self: end; line-height: 21px; white-space: nowrap; }
+  .association-table td:nth-child(4) { grid-area: time; }
+  .association-table td:nth-child(5) { grid-area: place; }
+  .association-table td:nth-child(6) { grid-area: source; align-self: center; }
+  .association-table td:nth-child(7) { grid-area: photo; }
+  .association-table .association-row-action { grid-area: action; position: static; align-self: end; justify-self: end; padding: 0; background: none; }
+  .association-photo { display: block; width: 46px; }
+  .association-photo-meta { display: none; }
+  .association-vehicle { flex-direction: row; align-items: baseline; gap: 10px; }
+  .association-chip { flex: 1; width: auto; min-width: 0; }
+  .association-time.association-cell-stack { flex-direction: row; align-items: baseline; gap: 8px; }
+  .association-detail-action { min-height: 36px; margin: -4px -8px -8px 0; }
+}
+/* 触屏：分页、下拉选项、行内操作和勾选框放大到手指好点的尺寸。 */
+@media (pointer: coarse) {
+  .task-pagination .icon-btn,
+  .association-pagination .icon-btn { width: 40px; min-width: 40px; height: 40px; min-height: 40px; }
+  .filter-select-option { min-height: 44px; }
+  .task-row-actions .link { min-height: 36px; }
+  .task-check input { width: 20px; height: 20px; }
+}
+/* 手机浏览器（iOS Safari、微信内置浏览器）在输入框字号小于 16px 时，聚焦会自动放大整个页面；
+   这里统一提到 16px。各处输入框的字号选择器优先级不一，所以用 !important 一次盖住。 */
+@media (max-width: 650px) and (pointer: coarse) {
+  input:not([type='checkbox']):not([type='radio']):not([type='file']),
+  select,
+  textarea { font-size: 16px !important; }
+  .record-capture-scope input { width: 140px; }
+}

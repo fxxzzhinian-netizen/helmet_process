@@ -102,6 +102,11 @@ export type AssociationImport = {
   named_count: number
   created_at: string
 }
+// 通用人员资料：对全部图片生效；某次导入单独关联过资料时，那一次用自己的
+export type SharedAssociation = {
+  revision: number
+  imported?: AssociationImport | null
+}
 export type Identity = {
   status: 'matched' | 'unrecognized' | 'conflict'
   name: string
