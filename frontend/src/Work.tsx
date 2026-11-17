@@ -7,6 +7,7 @@ import { AssociationDialog, IdentityFacts } from './Association'
 import { EventDetail } from './Records'
 import { FilterSelect } from './FilterSelect'
 import { Capsule } from './Capsule'
+import { TaskOutcomes } from './TaskOutcomes'
 import { normalizeTask, taskQueues, taskRows, initialQueue, filterTasks, imageQueue, taskRuns, taskTime, taskProgress, type TaskImage, type TaskQueue, type TaskRow } from './workTasks'
 
 const labels: Record<TaskQueue, string> = { pending: '待处理', processing: '处理中', reviews: '待人工复核', done: '已完成', error: '处理异常' }
@@ -139,6 +140,7 @@ export function Work({ index, params, upload, refresh }: { index?: Index; params
         <li><ListTodo size={14} aria-hidden="true" />排队中<b className="num">{tasks.data ? progress.queued : '—'}</b></li>
         <li><Clock3 size={14} aria-hidden="true" />待处理<b className="num">{tasks.data ? progress.pending : '—'}</b></li>
       </ul></div>
+      <TaskOutcomes images={images} loading={!tasks.data} />
       <button className="primary task-upload" onClick={upload}><Upload size={17} />上传图片</button>
     </section>
     <section className="kpis task-kpis" aria-label="任务状态">{taskQueues.map(item => <button className="kpi" key={item.id} aria-pressed={queue === item.id} onClick={() => changeQueue(item.id)}>
