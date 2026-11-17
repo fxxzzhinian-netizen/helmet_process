@@ -251,19 +251,16 @@ export function Records({
   useEffect(() => setBatch(batchParam), [batchParam])
   useEffect(() => setQuery(queryParam), [queryParam])
   useEffect(() => setIdentity(identityParam), [identityParam])
-  const origin = {
-    ...(params.get('return_from') ? { return_from: params.get('return_from')! } : {}),
-    ...(params.get('return_to') ? { return_to: params.get('return_to')! } : {}),
-  }
+  // 名单排在项目总览的图表下方，筛选条件都写在总览的地址参数里
   const routeParams = (extra: Record<string, string> = {}) => ({
-    tab: reviews ? 'reviews' : 'violations', ...scopeParams(scope), ...origin,
+    tab: reviews ? 'reviews' : 'violations', ...scopeParams(scope),
     ...(source ? { source } : {}), ...(batch ? { batch } : {}),
     ...(query ? { q: query } : {}), ...(identity ? { identity } : {}), ...extra,
   })
   const changeScope = (next: RecordScope) => {
     const retained: Record<string, string> = routeParams()
     for (const key of ['from', 'to', 'address', 'hour']) delete retained[key]
-    go('records', { ...retained, ...scopeParams(next) })
+    go('overview', { ...retained, ...scopeParams(next) })
   }
   const base = (reviews ? index?.reviews : index?.violations) || []
   const rows = base.filter(
@@ -278,20 +275,19 @@ export function Records({
   ).sort((a, b) => (captureTime(b)?.timestamp || 0) - (captureTime(a)?.timestamp || 0))
   const filtered = Boolean(query || source || batch || identity || scoped)
   const open = (id: string) =>
-    go('records', routeParams({ event: id }))
+    go('overview', routeParams({ event: id }))
   return (
     <>
-      <div className="page-intro">
-        <div>
-          <h1>违章记录</h1>
-          <p>按抓拍日期和判定来源查找事件，核对原图、模型初判与人工复核历史。</p>
+      <section className="records-panel home-records" id="home-records" aria-labelledby="home-records-heading">
+        <div className="association-ledger-head home-records-head">
+          <div>
+            <div className="association-title-line"><h2 id="home-records-heading">违章记录</h2></div>
+            <p>按抓拍日期和判定来源查找事件，核对原图、模型初判与人工复核历史。</p>
+          </div>
+          <div className="association-ledger-actions">
+            <ExportAssociations rows={rows} title={reviews ? '待复核关联记录' : '违章关联记录'} disabled={!index || !!syncError} />
+          </div>
         </div>
-        <ExportAssociations rows={rows} title={reviews ? '待复核关联记录' : '违章关联记录'} disabled={!index || !!syncError} />
-      </div>
-      {(origin.return_from || origin.return_to) && <button className="link record-overview-back" onClick={() => go('overview', {
-        ...(origin.return_from ? { from: origin.return_from } : {}), ...(origin.return_to ? { to: origin.return_to } : {}),
-      })}>← 返回项目总览</button>}
-      <section className="records-panel" aria-label="违章与复核记录">
         <div className="records-toolbar">
           <div className="records-tabs" role="group" aria-label="记录类型">
           {[
@@ -312,7 +308,7 @@ export function Records({
               key={t.label}
               aria-pressed={reviews === t.isReview}
               onClick={() =>
-                go('records', routeParams({ tab: t.isReview ? 'reviews' : 'violations' }))
+                go('overview', routeParams({ tab: t.isReview ? 'reviews' : 'violations' }))
               }
             >
               <t.icon size={17} />
@@ -382,7 +378,7 @@ export function Records({
                 setBatch('')
                 setSource('')
                 setIdentity('')
-                go('records', { tab: reviews ? 'reviews' : 'violations', ...origin })
+                go('overview', { tab: reviews ? 'reviews' : 'violations' })
               }}
             >
               <X size={14} />
@@ -427,7 +423,7 @@ export function Records({
           key={active}
           id={active}
           close={() =>
-            go('records', routeParams())
+            go('overview', routeParams())
           }
           changed={refresh}
         />

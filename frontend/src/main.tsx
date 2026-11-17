@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import {
   Activity,
-  Archive,
   ChevronUp,
   Cpu,
   LayoutDashboard,
@@ -21,13 +20,11 @@ import { Fault } from './ui'
 import { Overview } from './Overview'
 import { Work } from './Work'
 import { Batches } from './Batches'
-import { Records } from './Records'
 import { UploadDialog } from './Upload'
 import './style.css'
 const pages = [
   { id: 'overview', name: '项目总览', icon: LayoutDashboard },
   { id: 'work', name: '识别工作台', icon: ScanLine },
-  { id: 'records', name: '违章记录', icon: Archive },
 ]
 // 没有悬停能力的屏幕（触屏）且侧栏处于图标导轨形态；宽度与 style.css 的断点一致
 const tapRail = window.matchMedia('(hover: none) and (min-width: 651px)')
@@ -225,9 +222,7 @@ function App() {
       <div className="content">
         <main id="main" tabIndex={-1}>
           {index.error && <Fault text={index.error} retry={index.refresh} />}
-          {route.page === 'overview' ? (
-            <Overview index={index.data} />
-          ) : route.page === 'work' ? (
+          {route.page === 'work' ? (
             <Work
               index={index.data}
               params={route.params}
@@ -242,7 +237,8 @@ function App() {
               upload={() => setUpload(true)}
             />
           ) : (
-            <Records
+            // 违章记录的名单排在总览图表下方，不再有单独的页面
+            <Overview
               index={index.data}
               params={route.params}
               refresh={index.refresh}

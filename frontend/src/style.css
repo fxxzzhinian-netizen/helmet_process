@@ -5196,7 +5196,13 @@ dialog.csv-export-dialog {
 .home-hour:hover { background: #edf3ed; }
 .home-hour-label { font-size: 11px; color: var(--muted); text-align: center; white-space: nowrap; }
 .home-hour-label small { font-size: 10px; margin-left: 1px; opacity: .7; }
-.record-overview-back { margin-bottom: 15px; font-size: 12px; }
+/* 违章记录名单：排在总览图表下方，用分隔线和标题行与图表分开；点指标或图表时滚动到这里。 */
+.home-records { margin-top: 34px; padding-top: 26px; border-top: 1px solid var(--line); scroll-margin-top: 16px; }
+.home-records-head { margin-bottom: 20px; }
+@media (max-width: 650px) {
+  .home-records { margin-top: 26px; padding-top: 20px; }
+  .home-records-head { margin-bottom: 16px; }
+}
 .record-capture-scope { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; padding: 14px 0 2px; color: var(--muted); font-size: 12px; }
 .record-capture-scope input { min-width: 0; width: 144px; min-height: 34px; border: 1px solid var(--line); border-radius: 5px; padding: 6px 8px; background: #fff; color: var(--ink); }
 .record-capture-scope .link { font-size: 11px; }
@@ -5290,12 +5296,13 @@ dialog.csv-export-dialog {
 .task-table td { padding: 15px 14px; font-size: 13px; border-bottom: 1px solid var(--association-rule); vertical-align: middle; }
 .task-table tbody tr:hover { background: var(--association-hover); }
 .task-table .task-check { width: 38px; padding-inline: 12px 2px; }
-.task-table th:first-child { width: 29%; }
-.task-table-selectable th:first-child { width: 38px; }
-.task-table-selectable th:nth-child(2) { width: 29%; }
-.task-table th:nth-last-child(4) { width: 148px; }
-.task-table th:nth-last-child(2) { width: 130px; }
-.task-table th:last-child { width: 188px; } /* 两个带图标的操作并排一行：2 ×（图标 14 + 间距 6 + 四个字 48）+ 间距 12 + 单元格内边距 28 */
+/* 列宽按列名指定：“待人工复核”“已完成”两个列表没有状态列，不能按第几列来数；地点列占剩余宽度 */
+.task-table th.task-col-photo { width: 29%; }
+.task-table th.task-col-time { width: 148px; }
+.task-table th.task-col-status { width: 130px; }
+.task-table th.task-col-actions { width: 188px; } /* 两个带图标的操作并排一行：2 ×（图标 14 + 间距 6 + 四个字 48）+ 间距 12 + 单元格内边距 28 */
+/* “已完成”列表有三个操作：操作列再加一个操作的宽度（68 + 间距 12） */
+.task-table-done th.task-col-actions { width: 268px; }
 .task-photo { display: flex; align-items: center; gap: 12px; width: 100%; padding: 0; border: 0; background: transparent; text-align: left; }
 .task-thumbnail { width: 68px; height: 50px; flex: none; display: grid; place-items: center; overflow: hidden; background: #eff3f0; color: #879a8e; border-radius: 5px; }
 .task-thumbnail img { width: 100%; height: 100%; object-fit: cover; }
@@ -5374,15 +5381,21 @@ dialog.csv-export-dialog {
   .task-table tbody tr:hover { background: none; }
   .task-table td { display: block; min-width: 0; padding: 0; border-bottom: 0; }
   .task-table td.task-check { grid-area: check; align-self: start; width: auto; padding: 17px 0 0; }
-  .task-table td:nth-last-child(5) { grid-area: photo; }
-  .task-table td:nth-last-child(4) { grid-area: time; }
-  .task-table td:nth-last-child(3) { grid-area: place; }
-  .task-table td:nth-last-child(2) { grid-area: status; justify-self: end; align-self: start; max-width: 42vw; text-align: right; }
-  .task-table td:last-child { grid-area: actions; justify-self: end; }
+  .task-table td.task-col-photo { grid-area: photo; }
+  .task-table td.task-col-time { grid-area: time; }
+  .task-table td.task-col-place { grid-area: place; }
+  .task-table td.task-col-status { grid-area: status; justify-self: end; align-self: start; max-width: 42vw; text-align: right; }
+  .task-table td.task-col-actions { grid-area: actions; justify-self: end; }
   .task-time > span, .task-time > small { display: inline; }
   .task-time > small { margin: 0 0 0 7px; }
   .task-address { white-space: normal; overflow-wrap: anywhere; }
   .task-row-actions { justify-content: flex-end; }
+  /* 没有状态列的列表（待人工复核、已完成）：图片占满第一行 */
+  .task-table-nostatus tbody tr { grid-template-areas: 'photo photo' 'time actions' 'place place'; }
+  /* “已完成”有三个操作，和时间挤不进同一行：操作单独占最后一行，靠左排 */
+  .task-table-done tbody tr { grid-template-areas: 'photo photo' 'time time' 'place place' 'actions actions'; }
+  .task-table-done td.task-col-actions { justify-self: start; }
+  .task-table-done .task-row-actions { justify-content: flex-start; }
   .task-image-heading { margin-top: 8px; }
   .task-image-aside .identity-facts dl { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }

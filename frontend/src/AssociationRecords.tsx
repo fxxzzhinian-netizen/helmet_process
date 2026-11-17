@@ -92,7 +92,8 @@ export function AssociationTable({ rows, open, resetKey = '', label = '违章关
                     <div className={'association-person' + (matched ? '' : ' unmatched')}>
                       <div className="association-person-heading">
                         <b title={matched ? person.name : person?.reason}>{matched ? person.name : '未识别'}</b>
-                        {(!matched || person?.method !== 'demo') && <span className={'association-method' + (person?.status === 'conflict' ? ' conflict' : '')}
+                        {/* 正常关联上的人员（按文件名、演示配对）不显示关联方式；只标出未识别、资料冲突和按目标关联 */}
+                        {(!matched || person?.method === 'target') && <span className={'association-method' + (person?.status === 'conflict' ? ' conflict' : '')}
                           title={person?.reason}>{associationMethod(row)}</span>}
                       </div>
                       <small className="num" title={person?.person_id}>{person?.person_id || '未提供人员编号'}</small>
@@ -196,7 +197,7 @@ export function BatchAssociationRecords({ batch, onImport }: { batch: Batch; onI
       </div>
       {remote.error && <Fault text={remote.error} retry={remote.refresh} />}
       {rows.length ? <AssociationTable rows={rows} resetKey={query + ':' + identity + ':' + outcome} open={(row) =>
-        go('records', { batch: batch.id, tab: row.status === 'review' && canReview(row) ? 'reviews' : 'violations', event: row.id })} /> :
+        go('overview', { batch: batch.id, tab: row.status === 'review' && canReview(row) ? 'reviews' : 'violations', event: row.id })} /> :
         <Empty icon={FileSearch} title={!remote.data ? '正在读取关联结果' : filtered ? '没有匹配的关联记录' : '等待识别结果'}
           body={filtered ? '调整筛选条件或搜索其他姓名、车牌和文件名。' : '每完成一张图片识别，这里会自动显示目标及关联人员资料。'} />}
     </section>

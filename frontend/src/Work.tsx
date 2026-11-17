@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Check, ChevronLeft, ChevronRight, CircleCheck, CircleX, Clock3, ClipboardCheck, Eye, ImageOff, Link2, ListTodo, LoaderCircle, Play, RefreshCw, Search, Upload, X } from 'lucide-react'
+import { Bell, Check, ChevronLeft, ChevronRight, CircleCheck, CircleX, Clock3, ClipboardCheck, Eye, ImageOff, Link2, ListTodo, LoaderCircle, Play, RefreshCw, Search, Upload, X } from 'lucide-react'
 import { api, canReview, eventScope, go, imgUrl, message, pathId, post, useRemote, type Batch, type Detail, type EventRow, type Index } from './data'
 import { Badge, Dialog, Empty, Fault } from './ui'
 import { Evidence } from './Evidence'
@@ -90,6 +90,8 @@ export function Work({ index, params, upload, refresh }: { index?: Index; params
   const pageSize = 20, pages = Math.max(1, Math.ceil(rows.length / pageSize)), currentPage = Math.min(page, pages)
   const visible = rows.slice((currentPage - 1) * pageSize, currentPage * pageSize)
   const actionable = queue === 'pending' || queue === 'error'
+  // “待人工复核”“已完成”两个列表里每行状态都一样，不显示状态列
+  const showStatus = queue !== 'reviews' && queue !== 'done'
   const runnable = rows.map(row => row.image).filter(image => taskRuns([image]).length)
   const selected = runnable.filter(image => selection.includes(image.id))
   const allChecked = visible.length > 0 && visible.every(row => selection.includes(row.image.id))
@@ -169,20 +171,22 @@ export function Work({ index, params, upload, refresh }: { index?: Index; params
       </div>}
     </div>
     {rows.length ? <>
-      <div className="task-table-scroll" role="region" aria-label={labels[queue] + '任务列表，可横向滚动'} tabIndex={0}><table className={'task-table' + (actionable ? ' task-table-selectable' : '')}><thead><tr>
+      <div className="task-table-scroll" role="region" aria-label={labels[queue] + '任务列表，可横向滚动'} tabIndex={0}><table className={'task-table' + (actionable ? ' task-table-selectable' : '') + (showStatus ? '' : ' task-table-nostatus') + (queue === 'done' ? ' task-table-done' : '')}><thead><tr>
         {actionable && <th className="task-check"><input type="checkbox" aria-label="选择本页全部图片" checked={allChecked} disabled={busy} onChange={event => setSelection(current => event.target.checked ? [...new Set([...current, ...visible.map(row => row.image.id)])] : current.filter(id => !visible.some(row => row.image.id === id)))} /></th>}
-        <th>现场图片</th><th>抓拍时间</th><th>地点</th><th>状态</th><th>操作</th>
+        <th className="task-col-photo">现场图片</th><th className="task-col-time">抓拍时间</th><th>地点</th>{showStatus && <th className="task-col-status">状态</th>}<th className="task-col-actions">操作</th>
       </tr></thead><tbody>{visible.map(row => {
         const person = row.event?.identity || row.image.identity
         const [day, clock] = taskTime(person?.captured_at)
         return <tr key={row.id}>
           {actionable && <td className="task-check"><input type="checkbox" aria-label={'选择图片 ' + row.image.filename} checked={selection.includes(row.image.id)} disabled={busy} onChange={event => setSelection(current => event.target.checked ? [...current, row.image.id] : current.filter(id => id !== row.image.id))} /></td>}
-          <td><TaskPhoto row={row} open={() => route({ image: row.image.id })} /></td>
-          <td className="num task-time"><span>{day}</span><small>{clock}</small></td>
-          <td><span className="task-address" title={person?.address}>{person?.address || '—'}</span></td>
-          <td><TaskStatus queue={queue} queued={row.image.queued} />{queue === 'error' && row.image.error && <span className="task-error-reason" title={row.image.error}>{row.image.error}</span>}</td>
-          <td><div className="task-row-actions">{actionable ? <button className="link" disabled={busy || !!tasks.error} onClick={() => run([row.image])}>{queue === 'error' ? '重试处理' : '开始处理'}</button> : row.event ? <button className="link" onClick={() => openEvent(row.event!)}>开始复核</button> : <button className="link" onClick={() => route({ image: row.image.id })}><Eye size={14} aria-hidden="true" />{queue === 'processing' ? '查看图片' : '查看结果'}</button>}
+          <td className="task-col-photo"><TaskPhoto row={row} open={() => route({ image: row.image.id })} /></td>
+          <td className="num task-time task-col-time"><span>{day}</span><small>{clock}</small></td>
+          <td className="task-col-place"><span className="task-address" title={person?.address}>{person?.address || '—'}</span></td>
+          {showStatus && <td className="task-col-status"><TaskStatus queue={queue} queued={row.image.queued} />{queue === 'error' && row.image.error && <span className="task-error-reason" title={row.image.error}>{row.image.error}</span>}</td>}
+          <td className="task-col-actions"><div className="task-row-actions">{actionable ? <button className="link" disabled={busy || !!tasks.error} onClick={() => run([row.image])}>{queue === 'error' ? '重试处理' : '开始处理'}</button> : row.event ? <button className="link" onClick={() => openEvent(row.event!)}>开始复核</button> : <button className="link" onClick={() => route({ image: row.image.id })}><Eye size={14} aria-hidden="true" />{queue === 'processing' ? '查看图片' : '查看结果'}</button>}
             {queue === 'done' && <button className="link" onClick={() => associate(row.image.batch_id, () => {}, row.image.filename)} disabled={associationBusy}><Link2 size={14} aria-hidden="true" />关联资料</button>}
+            {/* 推送提醒：目前只有按钮，推送功能尚未接入，点击没有动作 */}
+            {queue === 'done' && <button type="button" className="link"><Bell size={14} aria-hidden="true" />推送提醒</button>}
           </div></td>
         </tr>
       })}</tbody></table></div>

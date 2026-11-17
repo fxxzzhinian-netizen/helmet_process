@@ -221,10 +221,8 @@ export function readRoute() {
   const [page, q] = location.hash.slice(1).replace(/^\//, '').split('?')
   return {
     // The work route is the task queue; legacy image links remain supported.
-    page:
-      page === 'work' || page === 'records' || page === 'batches'
-        ? page
-        : 'overview',
+    // Records now sit below the overview charts: old #/records links open the overview with the same filters.
+    page: page === 'work' || page === 'batches' ? page : 'overview',
     params: new URLSearchParams(q),
   }
 }
