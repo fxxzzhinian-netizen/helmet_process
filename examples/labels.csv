@@ -1,0 +1,3 @@
+filename,prediction
+example_helmet.jpg,helmet
+example_no_helmet.jpg,no_helmet

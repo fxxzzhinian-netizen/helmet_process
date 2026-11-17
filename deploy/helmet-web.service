@@ -1,0 +1,17 @@
+[Unit]
+Description=Helmet review website
+After=network-online.target helmet-model.service
+Wants=network-online.target helmet-model.service
+
+[Service]
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/opt/helmet-review/current
+EnvironmentFile=/opt/helmet-review/shared/service.env
+ExecStart=/opt/helmet-review/venv/bin/python -X utf8 -m backend --host 127.0.0.1 --port 8765
+Restart=on-failure
+RestartSec=5
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

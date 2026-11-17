@@ -1,0 +1,6 @@
+Flask>=3.1,<4
+waitress>=3.0,<4
+filelock>=3.13,<4
+Pillow>=10
+# The decision rules compare vehicle appearance across panels. Same version as the model environment.
+opencv-python-headless==4.11.0.86
